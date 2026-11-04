@@ -9,6 +9,7 @@ import {
   Button,
   EmptyState,
   Field,
+  GroupHeading,
   Input,
   ListRow,
   useConfirm,
@@ -141,51 +142,64 @@ export function RunView({
     }
   };
 
-  if (!action) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col gap-2">
-        <div className="flex flex-wrap gap-2">
-          <div className="relative min-w-48 flex-1">
-            <Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" />
-            <Input
-              className="pl-7"
-              value={query}
-              placeholder={t("run.search")}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
-          <PluginChoice
-            actions={listed}
-            value={shownPlugin}
-            onChange={setPlugin}
+  const catalogList = (
+    <div className="flex min-h-0 flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        <div className="relative min-w-40 flex-1">
+          <Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" />
+          <Input
+            className="pl-7"
+            value={query}
+            placeholder={t("run.search")}
+            onChange={(event) => setQuery(event.target.value)}
           />
         </div>
-        {filtered.length === 0 ? (
-          <EmptyState
-            icon={Zap}
-            title={t("run.none")}
-            hint={t("run.noneHint")}
-          />
-        ) : (
-          <div className="flex flex-col gap-1 overflow-auto">
-            {shown.rows.map((entry) => (
+        <PluginChoice
+          actions={listed}
+          value={shownPlugin}
+          onChange={setPlugin}
+        />
+      </div>
+      {filtered.length === 0 ? (
+        <EmptyState icon={Zap} title={t("run.none")} hint={t("run.noneHint")} />
+      ) : (
+        <div className="flex min-h-0 flex-col gap-1 overflow-auto thin-scrollbar">
+          {shown.rows.map((entry, index) => (
+            <div key={entry.id} className="flex flex-col gap-1">
+              {(index === 0 ||
+                shown.rows[index - 1].pluginName !== entry.pluginName) && (
+                <GroupHeading title={entry.pluginName} className="px-1 pt-1" />
+              )}
               <ListRow
-                key={entry.id}
                 title={entry.title}
                 icon={<Zap className="size-4" />}
-                meta={entry.pluginName}
+                meta={t(`run.scope.${entry.scope}`)}
                 badges={<RiskBadge risk={entry.risk} />}
                 dimmed={!entry.available}
+                selected={entry.id === actionId}
                 onClick={() => setActionId(entry.id)}
               />
-            ))}
-            <Pager
-              page={shown.page}
-              pages={shown.pages}
-              onPage={shown.setPage}
-            />
-          </div>
-        )}
+            </div>
+          ))}
+          <Pager page={shown.page} pages={shown.pages} onPage={shown.setPage} />
+        </div>
+      )}
+    </div>
+  );
+
+  if (!action) {
+    return (
+      <div className="flex min-h-0 flex-1 gap-3">
+        <div className="flex min-h-0 w-full flex-col md:w-96 md:shrink-0">
+          {catalogList}
+        </div>
+        <div className="hidden min-h-0 flex-1 items-center justify-center border-l border-border md:flex">
+          <EmptyState
+            icon={Play}
+            title={t("run.pick")}
+            hint={t("run.pickHint")}
+          />
+        </div>
       </div>
     );
   }
@@ -197,110 +211,115 @@ export function RunView({
     (action.scope !== "resource" || !!resourceKey);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 text-sm font-medium">
-            {action.title}
-            <RiskBadge risk={action.risk} />
-          </div>
-          <p className="text-xs text-muted-foreground">
-            {action.description ?? action.pluginName}
-          </p>
-        </div>
-        <Button variant="ghost" size="sm" onClick={() => setActionId("")}>
-          {t("run.change")}
-        </Button>
+    <div className="flex min-h-0 flex-1 gap-3">
+      <div className="hidden min-h-0 w-96 shrink-0 flex-col md:flex">
+        {catalogList}
       </div>
-
-      {!action.available && (
-        <Alert className="rounded-none text-xs">{t("run.unavailable")}</Alert>
-      )}
-
-      {needsHost &&
-        (candidates.length === 0 ? (
-          <Alert className="rounded-none text-xs">{t("run.noHosts")}</Alert>
-        ) : (
-          <Field label={t("run.host")}>
-            <Choice
-              label={t("run.host")}
-              value={String(hostId ?? "")}
-              onChange={(next) => setHostId(Number(next))}
-              options={candidates.map((host) => ({
-                value: String(host.id),
-                label: hostLabel(host),
-              }))}
-            />
-          </Field>
-        ))}
-
-      {action.scope === "resource" && (
-        <TargetField
-          choices={choices}
-          value={resourceKey}
-          onChange={setResourceKey}
-        />
-      )}
-
-      <ActionForm
-        hostId={hostId}
-        fields={action.inputs}
-        values={values}
-        onChange={setValues}
-        disabled={busy}
-      />
-
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          disabled={!ready || busy}
-          onClick={() => void run(true)}
-        >
-          {t("run.dryRun")}
-        </Button>
-        <Button
-          variant={action.risk === "destructive" ? "destructive" : "default"}
-          disabled={!ready || busy}
-          onClick={() => void run(false)}
-        >
-          <Play className="mr-1 size-3.5" />
-          {t("run.run")}
-        </Button>
-        {needsHost && (
-          <Button
-            variant="ghost"
-            disabled={!action.available}
-            onClick={() =>
-              onRollout(action, cleanValues(values), resourceKey || undefined)
-            }
-          >
-            {t("run.manyHosts")}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto md:border-l md:border-border md:pl-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              {action.title}
+              <RiskBadge risk={action.risk} />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {action.description ?? action.pluginName}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setActionId("")}>
+            {t("run.change")}
           </Button>
+        </div>
+
+        {!action.available && (
+          <Alert className="rounded-none text-xs">{t("run.unavailable")}</Alert>
+        )}
+
+        {needsHost &&
+          (candidates.length === 0 ? (
+            <Alert className="rounded-none text-xs">{t("run.noHosts")}</Alert>
+          ) : (
+            <Field label={t("run.host")}>
+              <Choice
+                label={t("run.host")}
+                value={String(hostId ?? "")}
+                onChange={(next) => setHostId(Number(next))}
+                options={candidates.map((host) => ({
+                  value: String(host.id),
+                  label: hostLabel(host),
+                }))}
+              />
+            </Field>
+          ))}
+
+        {action.scope === "resource" && (
+          <TargetField
+            choices={choices}
+            value={resourceKey}
+            onChange={setResourceKey}
+          />
+        )}
+
+        <ActionForm
+          hostId={hostId}
+          fields={action.inputs}
+          values={values}
+          onChange={setValues}
+          disabled={busy}
+        />
+
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={!ready || busy}
+            onClick={() => void run(true)}
+          >
+            {t("run.dryRun")}
+          </Button>
+          <Button
+            variant={action.risk === "destructive" ? "destructive" : "default"}
+            disabled={!ready || busy}
+            onClick={() => void run(false)}
+          >
+            <Play className="mr-1 size-3.5" />
+            {t("run.run")}
+          </Button>
+          {needsHost && (
+            <Button
+              variant="ghost"
+              disabled={!action.available}
+              onClick={() =>
+                onRollout(action, cleanValues(values), resourceKey || undefined)
+              }
+            >
+              {t("run.manyHosts")}
+            </Button>
+          )}
+        </div>
+
+        {outcome && (
+          <div className="flex flex-col gap-1 border border-border p-3 text-xs">
+            <div className="flex items-center gap-2">
+              <StateBadge state={outcome.status} />
+              <span>{outcome.summary ?? outcome.error}</span>
+            </div>
+            {outcome.data !== undefined && (
+              <pre className="max-h-64 overflow-auto whitespace-pre-wrap bg-muted p-2 font-mono text-[11px]">
+                {JSON.stringify(outcome.data, null, 2)}
+              </pre>
+            )}
+            {outcome.runId && (
+              <button
+                type="button"
+                className="self-start text-accent-brand underline"
+                onClick={() => onOpenRun(outcome.runId!)}
+              >
+                {t("run.openRun")}
+              </button>
+            )}
+          </div>
         )}
       </div>
-
-      {outcome && (
-        <div className="flex flex-col gap-1 border border-border p-3 text-xs">
-          <div className="flex items-center gap-2">
-            <StateBadge state={outcome.status} />
-            <span>{outcome.summary ?? outcome.error}</span>
-          </div>
-          {outcome.data !== undefined && (
-            <pre className="max-h-64 overflow-auto whitespace-pre-wrap bg-muted p-2 font-mono text-[11px]">
-              {JSON.stringify(outcome.data, null, 2)}
-            </pre>
-          )}
-          {outcome.runId && (
-            <button
-              type="button"
-              className="self-start text-accent-brand underline"
-              onClick={() => onOpenRun(outcome.runId!)}
-            >
-              {t("run.openRun")}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

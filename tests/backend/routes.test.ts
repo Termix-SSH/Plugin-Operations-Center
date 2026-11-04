@@ -229,5 +229,6 @@ describe("drift", () => {
     });
     const attention = await server.request("GET", "/attention");
     expect(attention.body.drifted).toBe(1);
+    expect(attention.body.running).toBe(0);
   });
 });

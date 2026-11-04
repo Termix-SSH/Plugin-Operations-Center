@@ -2,10 +2,12 @@ Operations Center is where you run and watch the actions other plugins offer. Pl
 
 Open it from the Operations button in the rail, or search for an action in the command palette.
 
+Operations opens on an overview: what needs attention, what waits for approval, the latest runs and rollouts in progress. Arrange tiles moves, resizes and adds tiles, including any plugin's status. The menu on the left shows counts next to Approvals, History (failed runs in the last day), Rollouts and Drift.
+
 ## Run an action
 
-1. Open Operations and pick Run.
-2. Search for an action and pick it, or pick a plugin to see only its actions. Only hosts where the action applies are offered.
+1. Open Operations and pick Actions.
+2. Search for an action and pick it, or pick a plugin to see only its actions. Its form opens next to the list. Only hosts where the action applies are offered.
 3. For an action on one item, such as a container, pick it from the list.
 4. Fill in the form and press Dry run to see what would happen, or Run.
 
@@ -13,14 +15,22 @@ Every run is checked the same way wherever it starts: your role permissions, you
 
 ## Host page
 
-Each host has a Host page. Open it from the host's menu or the Host page button. It has:
+Each host has a Host page. Open it from the host's menu or the Host page button.
 
-- The host's status and the buttons to connect. Terminal, remote desktop and other sessions open inside the page.
-- Status tiles from every plugin, such as unhealthy containers or failed services, with a fix button.
-- How many containers, services and other things the host has.
-- Every action on the host, by plugin, 10 to a page. Search finds any of them, and the plugin list next to it shows one plugin's actions. Actions that work on one thing, such as restarting a container, ask which one.
-- Recent changes on the host, a page at a time.
-- Every session and tool for the host on the left. They open inside the page and keep running while you move between them, so you need one tab instead of ten. Open in its own tab puts one back in a normal tab, for split view.
+The page opens on an overview made of tiles. Out of the box it shows the host's status tiles, its terminal, tiles other plugins add (such as Host Metrics charts), how many containers, services and other things it has, a few one click actions, recent changes and the full list of actions.
+
+Press Arrange tiles to change it. Drag a tile to move it, drag its edges to resize it, and add tiles from the list on the right. You can add:
+
+- Any status a plugin reports. A count shows as a number, a gauge as a bar, a list as rows. Some have a fix button.
+- Any action, with its fields right in the tile, like Run snippet with the snippet to pick. Destructive actions ask first.
+- All of one plugin's actions as a row of buttons.
+- Lists, such as the host's containers, with buttons on each row.
+- A live session, such as the terminal. Full size opens it over the whole page and it keeps running.
+- Tiles from other plugins, recent changes, the action list and the counts.
+
+Tiles are the same for every host, and a host only shows the ones it has. Turn on Only this host to give one host its own tiles. Reset goes back to the default.
+
+Every session and tool for the host is also on the left. They open inside the page and keep running while you move between them, so you need one tab instead of ten. Open in its own tab puts one back in a normal tab, for split view.
 
 The tool buttons on a host row still open their own tabs, like always. To open them inside the host page instead, go to Customize sidebar and set Open host tools in to The host page. Then each button shows that tool on the host's page, and a page already open for the host is reused.
 
@@ -33,9 +43,11 @@ The host page also shows up in other places:
 - On the host row, where a dot shows next to the name while one of the host's status tiles is warning or failing. Hover it to see which. Turn it off with Show the attention dot in this plugin's settings.
 - In the host's menu, under Actions, with one list per plugin. Actions with nothing to fill in run right away; the rest open with their form.
 
-## All hosts
+## Hosts
 
-All hosts shows one kind of thing across every host, such as every container or every service. Filter by host or status, search the table, select rows on any hosts and run an action on all of them at once. Click a host name to open its host page. Hosts answer in the background, so the table fills in as they reply.
+Hosts shows a card per host, worst first, with the status tiles that need a look. Click one to open its host page. Switch to the list view for tables:
+
+The tables show one kind of thing across every host, such as every container or every service. Filter by host or status, search the table, select rows on any hosts and run an action on all of them at once. Click a host name to open its host page. Hosts answer in the background, so the table fills in as they reply.
 
 History can show one action, one host or one status. Long lists in every view show a page at a time.
 
@@ -76,6 +88,10 @@ Operations Center has an MCP server, so AI tools like Claude Code can use Termix
 3. Point the tool at `https://your-termix/plugin-api/operations-center/mcp` with the header `Authorization: Bearer <key>`.
 
 Only actions a plugin marked safe for MCP are offered. Changes follow the approval rules, so by default they wait for you in Approvals.
+
+## Dashboard tiles
+
+When you arrange the dashboard, the add list has every plugin's status and action. A status tile shows how every host is doing, worst first, or one host you pick. An action tile is a button, for a host you pick once.
 
 ## Needs attention
 

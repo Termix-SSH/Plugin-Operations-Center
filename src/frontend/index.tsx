@@ -19,6 +19,15 @@ import {
 import { appliesTo } from "./hosts";
 import { OperationsTab } from "./OperationsTab";
 import { registerWidgets } from "./widgets";
+import { HOST_TILES_SLOT } from "./tiles/HostGrid";
+import {
+  ACTION_CARD,
+  ActionCard,
+  SIGNAL_CARD,
+  SignalCard,
+  actionEntries,
+  signalEntries,
+} from "./tiles/DashboardTiles";
 
 const TAB = "operations";
 const HOST_TAB = "host";
@@ -68,6 +77,8 @@ export function activate(app: TermixApp): void {
     order: 1,
     tabType: HOST_TAB,
     overview: true,
+    // Off host rows unless the user picks it in onboarding or Customize sidebar.
+    tray: false,
     when: () => canUse,
   });
 
@@ -144,6 +155,29 @@ export function activate(app: TermixApp): void {
     frame: "framed",
     component: AttentionCard,
   });
+
+  // Any plugin's signals and actions as dashboard tiles, one per pick.
+  app.registerDashboardCard({
+    id: SIGNAL_CARD,
+    titleKey: "tiles.signalCard",
+    frame: "framed",
+    defaultSize: { w: 4 },
+    entries: (language) =>
+      canUse ? signalEntries(language) : Promise.resolve([]),
+    component: SignalCard,
+  });
+  app.registerDashboardCard({
+    id: ACTION_CARD,
+    titleKey: "tiles.actionCard",
+    frame: "framed",
+    defaultSize: { w: 3 },
+    entries: (language) =>
+      canUse ? actionEntries(language) : Promise.resolve([]),
+    component: ActionCard,
+  });
+
+  // Other plugins add their own tiles to the host page here.
+  app.declareActionSlot({ id: HOST_TILES_SLOT, accepts: ["component"] });
 
   app.registerPaletteEntry({
     id: "open",

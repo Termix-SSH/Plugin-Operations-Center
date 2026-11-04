@@ -5,6 +5,7 @@ import {
   useState,
   type ComponentType,
 } from "react";
+import { createPortal } from "react-dom";
 import {
   useHostStatus,
   useTranslation,
@@ -21,10 +22,18 @@ import {
   useHostActions,
   useHostSections,
 } from "@termix-ssh/plugin-sdk/ui";
-import { ExternalLink, LayoutDashboard, Pencil, Server } from "lucide-react";
+import {
+  Check,
+  ExternalLink,
+  LayoutDashboard,
+  LayoutGrid,
+  Pencil,
+  Server,
+} from "lucide-react";
 import { getCatalog, type Catalog } from "./api";
 import { appliesTo, hostLabel, splitTags } from "./hosts";
-import { HostOverview } from "./HostOverview";
+import { HostGrid } from "./tiles/HostGrid";
+import { EmbedSlot, useEmbedNodes } from "./tiles/embeds";
 import { FRESH_MS, useSectionRequest } from "./host-page-nav";
 
 type HostAction = ReturnType<typeof useHostActions>[number];
@@ -45,16 +54,12 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
   const status = useHostStatus(Number(host?.id))?.status;
   const wanted = (tab.data as { section?: string } | undefined)?.section;
   const [section, setSection] = useState<string>(wanted ?? "overview");
-  // Tools stay mounted once opened, so switching back keeps their state.
-  const [opened, setOpened] = useState<Set<string>>(
-    new Set(wanted ? [wanted] : []),
-  );
+  const [editMode, setEditMode] = useState(false);
+  // Tools and sessions stay alive once opened, so switching back keeps their state.
+  const embed = useEmbedNodes();
 
   useEffect(() => {
-    if (wanted) {
-      setSection(wanted);
-      setOpened((prev) => new Set(prev).add(wanted));
-    }
+    if (wanted) setSection(wanted);
   }, [wanted]);
 
   // A tool button on the host row asked for a section of this page.
@@ -66,9 +71,6 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
     seenRequest.current = request.seq;
     if (first && Date.now() - request.at > FRESH_MS) return;
     setSection(request.section);
-    if (request.section !== "overview") {
-      setOpened((prev) => new Set(prev).add(request.section));
-    }
   }, [request]);
 
   useEffect(() => {
@@ -90,7 +92,10 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
     (action: HostAction) =>
       action.kind === "open" && !!action.tabType && action.tabType !== PAGE_TAB,
   );
-  const cards = host ? hostSectionsFor(sections, host as never) : [];
+  const cards = useMemo(
+    () => (host ? hostSectionsFor(sections, host as never) : []),
+    [sections, host],
+  );
   const hostActions = useMemo(
     () =>
       host && catalog
@@ -107,7 +112,7 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
 
   const open = (id: string) => {
     setSection(id);
-    if (id !== "overview") setOpened((prev) => new Set(prev).add(id));
+    if (id !== "overview") setEditMode(false);
   };
   const inPage = (action: HostAction) => sessions.includes(action);
   const popOut = (type: string) =>
@@ -135,33 +140,46 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
           </p>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-1">
-          {connect.map((action) => {
-            const Icon = action.icon as ComponentType<{ className?: string }>;
-            return (
-              <Button
-                key={action.id}
-                size="sm"
-                variant={
-                  inPage(action) && section === action.tabType
-                    ? "default"
-                    : "outline"
-                }
-                onClick={() =>
-                  inPage(action)
-                    ? open(action.tabType!)
-                    : runHostAction(action, host as never, shell as never)
-                }
-              >
-                <Icon className="mr-1 size-3.5" />
-                {action.label?.(host as never) ?? t(action.titleKey)}
-              </Button>
-            );
-          })}
+          {connect
+            .filter((action) => !inPage(action))
+            .map((action) => {
+              const Icon = action.icon as ComponentType<{ className?: string }>;
+              return (
+                <Button
+                  key={action.id}
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    runHostAction(action, host as never, shell as never)
+                  }
+                >
+                  <Icon className="mr-1 size-3.5" />
+                  {action.label?.(host as never) ?? t(action.titleKey)}
+                </Button>
+              );
+            })}
+          {section === "overview" && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className={editMode ? "text-accent-brand" : ""}
+              title={editMode ? t("tiles.done") : t("tiles.customize")}
+              aria-label={editMode ? t("tiles.done") : t("tiles.customize")}
+              onClick={() => setEditMode((on) => !on)}
+            >
+              {editMode ? (
+                <Check className="size-3.5" />
+              ) : (
+                <LayoutGrid className="size-3.5" />
+              )}
+            </Button>
+          )}
           {shell.editHost && (
             <Button
               size="sm"
               variant="ghost"
               title={t("host.edit")}
+              aria-label={t("host.edit")}
               onClick={() => shell.editHost?.(Number(host.id))}
             >
               <Pencil className="size-3.5" />
@@ -206,35 +224,38 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
         </nav>
 
         <main className="relative min-h-0 flex-1 overflow-hidden">
-          {section === "overview" && (
-            <HostOverview
+          {section === "overview" ? (
+            <HostGrid
               host={host}
               shell={shell}
               catalog={catalog}
               actions={hostActions}
-              cards={cards}
+              sessions={sessions}
+              sections={cards}
               isVisible={isVisible}
+              editMode={editMode}
+              onEditMode={setEditMode}
               onOpenTool={open}
+              embed={embed}
             />
+          ) : (
+            <div key={section} className="absolute inset-0 flex flex-col">
+              <EmbedSlot type={section} embed={embed} />
+            </div>
           )}
-          {[...opened].map((type) => {
-            const shown = section === type;
-            return (
-              <div
-                key={type}
-                className={`absolute inset-0 flex flex-col ${shown ? "" : "hidden"}`}
-              >
-                <div className="min-h-0 flex-1">
-                  <HostTabEmbed
-                    host={host as never}
-                    type={type}
-                    isVisible={isVisible && shown}
-                    shell={shell as never}
-                  />
-                </div>
-              </div>
-            );
-          })}
+          <div ref={embed.parking} className="hidden" aria-hidden="true" />
+          {[...embed.wanted].map((type) =>
+            createPortal(
+              <HostTabEmbed
+                host={host as never}
+                type={type}
+                isVisible={isVisible && embed.shown.has(type)}
+                shell={shell as never}
+              />,
+              embed.nodeFor(type),
+              type,
+            ),
+          )}
         </main>
       </div>
     </div>
