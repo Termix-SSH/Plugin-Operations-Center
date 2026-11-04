@@ -10,6 +10,7 @@ export const ORIGINS = [
   "drift",
   "fleet",
   "assistant",
+  "approved",
   "mcp",
   "plugin",
 ] as const;
