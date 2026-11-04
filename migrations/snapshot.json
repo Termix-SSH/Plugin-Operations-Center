@@ -1,0 +1,284 @@
+{
+  "version": 1,
+  "tables": {
+    "rules": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "type": "varchar",
+          "length": 120,
+          "notNull": true
+        },
+        "position": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 0
+        },
+        "enabled": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": true
+        },
+        "effect": {
+          "type": "varchar",
+          "length": 12,
+          "notNull": true
+        },
+        "minRisk": {
+          "type": "varchar",
+          "length": 16,
+          "notNull": true,
+          "defaultValue": "change"
+        },
+        "origins": {
+          "type": "json"
+        },
+        "pluginIds": {
+          "type": "json"
+        },
+        "actionIds": {
+          "type": "json"
+        },
+        "hostTags": {
+          "type": "json"
+        },
+        "allowSelf": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": false
+        },
+        "expiresInMinutes": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "type": "timestamp"
+        },
+        "updatedBy": {
+          "type": "varchar",
+          "length": 255
+        }
+      },
+      "indexes": []
+    },
+    "batches": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "type": "varchar",
+          "length": 255,
+          "notNull": true
+        },
+        "name": {
+          "type": "varchar",
+          "length": 200,
+          "notNull": true
+        },
+        "actionId": {
+          "type": "varchar",
+          "length": 255,
+          "notNull": true
+        },
+        "resourceKey": {
+          "type": "varchar",
+          "length": 255
+        },
+        "inputSealed": {
+          "type": "text"
+        },
+        "dryRun": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": false
+        },
+        "canary": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 0
+        },
+        "batchSize": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 10
+        },
+        "pauseSeconds": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 0
+        },
+        "stopAfterFailures": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 1
+        },
+        "status": {
+          "type": "varchar",
+          "length": 16,
+          "notNull": true,
+          "defaultValue": "draft"
+        },
+        "pausedReason": {
+          "type": "text"
+        },
+        "createdAt": {
+          "type": "timestamp"
+        },
+        "startedAt": {
+          "type": "timestamp"
+        },
+        "finishedAt": {
+          "type": "timestamp"
+        }
+      },
+      "indexes": []
+    },
+    "batch_targets": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "batchId": {
+          "type": "integer",
+          "notNull": true
+        },
+        "hostId": {
+          "type": "integer",
+          "notNull": true
+        },
+        "hostName": {
+          "type": "varchar",
+          "length": 255
+        },
+        "position": {
+          "type": "integer",
+          "notNull": true
+        },
+        "status": {
+          "type": "varchar",
+          "length": 24,
+          "notNull": true,
+          "defaultValue": "waiting"
+        },
+        "runId": {
+          "type": "varchar",
+          "length": 64
+        },
+        "summary": {
+          "type": "text"
+        },
+        "error": {
+          "type": "text"
+        },
+        "finishedAt": {
+          "type": "timestamp"
+        }
+      },
+      "indexes": []
+    },
+    "baselines": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "userId": {
+          "type": "varchar",
+          "length": 255,
+          "notNull": true
+        },
+        "name": {
+          "type": "varchar",
+          "length": 200,
+          "notNull": true
+        },
+        "checkActionId": {
+          "type": "varchar",
+          "length": 255,
+          "notNull": true
+        },
+        "resourceKey": {
+          "type": "varchar",
+          "length": 255
+        },
+        "inputSealed": {
+          "type": "text"
+        },
+        "targets": {
+          "type": "json"
+        },
+        "intervalMinutes": {
+          "type": "integer",
+          "notNull": true,
+          "defaultValue": 60
+        },
+        "fixActionId": {
+          "type": "varchar",
+          "length": 255
+        },
+        "autoFix": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": false
+        },
+        "enabled": {
+          "type": "boolean",
+          "notNull": true,
+          "defaultValue": true
+        },
+        "lastRunAt": {
+          "type": "timestamp"
+        },
+        "createdAt": {
+          "type": "timestamp"
+        }
+      },
+      "indexes": []
+    },
+    "baseline_results": {
+      "columns": {
+        "id": {
+          "type": "id",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "baselineId": {
+          "type": "integer",
+          "notNull": true
+        },
+        "hostId": {
+          "type": "integer",
+          "notNull": true
+        },
+        "hostName": {
+          "type": "varchar",
+          "length": 255
+        },
+        "state": {
+          "type": "varchar",
+          "length": 16,
+          "notNull": true
+        },
+        "detail": {
+          "type": "text"
+        },
+        "checkedAt": {
+          "type": "timestamp"
+        },
+        "changedAt": {
+          "type": "timestamp"
+        }
+      },
+      "indexes": []
+    }
+  }
+}
