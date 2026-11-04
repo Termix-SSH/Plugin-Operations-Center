@@ -268,6 +268,7 @@ export function RunView({
       )}
 
       <ActionForm
+        hostId={hostId}
         fields={action.inputs}
         values={values}
         onChange={setValues}

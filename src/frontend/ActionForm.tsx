@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "@termix-ssh/plugin-sdk/frontend";
 import {
   Field,
@@ -7,7 +8,7 @@ import {
   Switch,
   Textarea,
 } from "@termix-ssh/plugin-sdk/ui";
-import type { CatalogField } from "./api";
+import { runAction, type CatalogField } from "./api";
 
 export type FormValues = Record<string, unknown>;
 
@@ -29,19 +30,66 @@ export function cleanValues(values: FormValues): FormValues {
   );
 }
 
+type Choices = Record<string, { value: string; label: string }[]>;
+
+/** Choices a read action fills, for a field declared with optionsFrom. */
+function useDynamicChoices(fields: CatalogField[], hostId?: number): Choices {
+  const [choices, setChoices] = useState<Choices>({});
+  const wanted = fields
+    .filter((field) => field.optionsFrom)
+    .map((field) => `${field.key}:${field.optionsFrom}`)
+    .join(",");
+  useEffect(() => {
+    let live = true;
+    const next: Choices = {};
+    void Promise.all(
+      fields
+        .filter((field) => field.optionsFrom)
+        .map(async (field) => {
+          const outcome = await runAction(field.optionsFrom!, { hostId }).catch(
+            () => null,
+          );
+          const data = (outcome?.data ?? {}) as {
+            options?: { value: string; label?: string }[];
+            rows?: Record<string, unknown>[];
+          };
+          next[field.key] = data.options
+            ? data.options.map((option) => ({
+                value: String(option.value),
+                label: option.label ?? String(option.value),
+              }))
+            : (data.rows ?? []).map((row) => ({
+                value: String(row.id ?? row.name),
+                label: String(row.name ?? row.id),
+              }));
+        }),
+    ).then(() => live && setChoices(next));
+    return () => {
+      live = false;
+    };
+    // wanted stands in for fields, whose identity changes each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wanted, hostId]);
+  return choices;
+}
+
 /** Draws an action's inputs from its declaration. Core checks them again. */
 export function ActionForm({
   fields,
   values,
   onChange,
   disabled,
+  hostId,
 }: {
   fields: CatalogField[];
+  /** The host, so a field whose choices come from the host can load them. */
+  hostId?: number;
   values: FormValues;
   onChange: (next: FormValues) => void;
   disabled?: boolean;
 }) {
   const { t } = useTranslation();
+  const dynamic = useDynamicChoices(fields, hostId);
   const set = (key: string, value: unknown) =>
     onChange({ ...values, [key]: value });
 
@@ -81,9 +129,15 @@ export function ActionForm({
                 onChange={(event) => set(field.key, event.target.value)}
                 placeholder={field.placeholder ?? t("form.choose")}
               >
-                {(field.options ?? []).map((option) => (
+                {(field.optionsFrom
+                  ? (dynamic[field.key] ?? [])
+                  : (field.options ?? []).map((option) => ({
+                      value: option.value,
+                      label: field.optionLabels?.[option.value] ?? option.value,
+                    }))
+                ).map((option) => (
                   <option key={option.value} value={option.value}>
-                    {field.optionLabels?.[option.value] ?? option.value}
+                    {option.label}
                   </option>
                 ))}
               </Select2>

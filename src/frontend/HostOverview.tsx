@@ -242,6 +242,7 @@ export function HostOverview({
               <RiskBadge risk={picked.risk} />
             </div>
             <ActionForm
+              hostId={hostId}
               fields={picked.inputs}
               values={values}
               onChange={setValues}
