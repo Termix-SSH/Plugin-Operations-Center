@@ -13,10 +13,11 @@ import {
   type TermixApp,
 } from "@termix-ssh/plugin-sdk/frontend";
 import { Button, Input, Select2, WidgetTitle } from "@termix-ssh/plugin-sdk/ui";
-import { Activity, Play, Zap } from "lucide-react";
+import { Activity, Globe, Play, Zap } from "lucide-react";
 import {
   errorText,
   getCatalog,
+  getResources,
   getSignals,
   runAction,
   type Catalog,
@@ -315,6 +316,124 @@ function ActionButtonForm({ config, onChange }: EditProps<ButtonConfig>) {
   );
 }
 
+interface LinksConfig {
+  /** Group the links by host. */
+  byHost: boolean;
+}
+
+/** Only real web addresses, so a row can never become a script link. */
+function safeUrl(value: unknown): string | null {
+  if (typeof value !== "string" || !value) return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" || url.protocol === "http:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Every web address plugins know about, such as proxy routes, found on their
+ * own. Nobody has to type these in, and they stay current as routes change.
+ */
+function AutoLinks({ widget, config }: WidgetProps<LinksConfig>) {
+  const { t } = useTranslation();
+  const { hosts } = useHosts();
+  const catalog = useCatalog();
+  const [links, setLinks] = useState<
+    { key: string; name: string; url: string; hostId: number }[]
+  >([]);
+
+  const load = useCallback(async () => {
+    const withUrls = (catalog?.resources ?? []).filter(
+      (resource) => resource.url,
+    );
+    const found: { key: string; name: string; url: string; hostId: number }[] =
+      [];
+    for (const resource of withUrls) {
+      const result = await getResources(resource.id).catch(() => null);
+      for (const row of result?.rows ?? []) {
+        const url = safeUrl(row.row[resource.url!]);
+        if (!url) continue;
+        found.push({
+          key: `${resource.id}|${row.hostId}|${row.key}`,
+          name: String(row.row[resource.name] ?? row.key),
+          url,
+          hostId: row.hostId,
+        });
+      }
+    }
+    setLinks(found);
+  }, [catalog]);
+
+  useEffect(() => {
+    void load();
+    const timer = setInterval(() => void load(), REFRESH_MS * 4);
+    return () => clearInterval(timer);
+  }, [load]);
+
+  const groups = config.byHost
+    ? [...new Set(links.map((link) => link.hostId))].map((hostId) => ({
+        title:
+          hostLabel(hosts.find((host) => Number(host.id) === hostId) ?? {}) ||
+          String(hostId),
+        links: links.filter((link) => link.hostId === hostId),
+      }))
+    : [{ title: "", links }];
+
+  return (
+    <div className="flex h-full w-full flex-col gap-1 overflow-hidden">
+      <WidgetTitle title={widget.title} icon={<Globe size={11} />} />
+      {links.length === 0 ? (
+        <p className="p-2 text-xs text-muted-foreground">
+          {t("widgets.noLinks")}
+        </p>
+      ) : (
+        <div className="flex flex-1 flex-col gap-2 overflow-auto">
+          {groups.map((group) => (
+            <div key={group.title} className="flex flex-col gap-1">
+              {group.title && (
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                  {group.title}
+                </span>
+              )}
+              {group.links.map((link) => (
+                <a
+                  key={link.key}
+                  href={link.url}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="truncate border border-border px-2 py-1 text-xs hover:bg-muted"
+                >
+                  {link.name}
+                </a>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AutoLinksForm({ config, onChange }: EditProps<LinksConfig>) {
+  const { t } = useTranslation();
+  return (
+    <label className="flex items-center gap-2 text-xs">
+      <input
+        type="checkbox"
+        checked={config.byHost}
+        onChange={(event) =>
+          onChange({ ...config, byHost: event.target.checked })
+        }
+      />
+      {t("widgets.byHost")}
+    </label>
+  );
+}
+
 /** The homepage widgets this plugin adds, when the homepage plugin runs. */
 export function registerWidgets(app: TermixApp): void {
   const tiles: WidgetDefinition<TilesConfig> = {
@@ -341,4 +460,16 @@ export function registerWidgets(app: TermixApp): void {
   };
   app.registerExtension("homepage.widgets", tiles as never);
   app.registerExtension("homepage.widgets", button as never);
+  const links: WidgetDefinition<LinksConfig> = {
+    id: "operations_auto_links",
+    name: app.t("widgets.links"),
+    description: app.t("widgets.linksDescription"),
+    category: "links",
+    icon: <Globe size={14} />,
+    defaultConfig: { byHost: true },
+    defaultSize: { w: GRID * 8, h: GRID * 8 },
+    minSize: { w: GRID * 4, h: GRID * 3 },
+    components: { view: AutoLinks, editForm: AutoLinksForm },
+  };
+  app.registerExtension("homepage.widgets", links as never);
 }

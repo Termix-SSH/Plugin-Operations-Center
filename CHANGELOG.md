@@ -15,4 +15,4 @@
 - MCP server for outside AI tools, using an API key
 - Needs attention dashboard card
 - Every action in the command palette
-- Status tiles and action button widgets for the homepage
+- Status tiles, action button and found links widgets for the homepage. Found links lists web addresses plugins know about, such as proxy routes

@@ -269,6 +269,10 @@
     "which": "Show these. None picked shows all.",
     "action": "Action",
     "pickAction": "Pick an action",
-    "label": "Button text"
+    "label": "Button text",
+    "links": "Found links",
+    "linksDescription": "Web addresses plugins know about, such as proxy routes, with nothing to type in",
+    "noLinks": "No links found yet",
+    "byHost": "Group by host"
   }
 }

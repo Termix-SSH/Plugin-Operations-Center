@@ -73,4 +73,5 @@ Add the Needs attention card to the dashboard to see failing status tiles, waiti
 With the Homepage plugin on, add these widgets to your homepage:
 
 - Status tiles: what every plugin reports about your hosts. Pick which tiles to show, or only the ones with a problem.
+- Found links: web addresses plugins know about, such as Reverse Proxy routes, kept up to date with nothing to type in.
 - Action button: one button that runs an action, such as restarting a service on a host. It goes through the same checks and rules as any other run.
