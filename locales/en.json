@@ -106,6 +106,9 @@
   "history": {
     "status": "Status",
     "all": "All",
+    "action": "Action",
+    "allActions": "All actions",
+    "allHosts": "All hosts",
     "empty": "Nothing has run yet",
     "failed": "Could not load history",
     "cancel": "Cancel",
@@ -216,6 +219,7 @@
     "search": "Search",
     "status": "Status",
     "anyStatus": "Any status",
+    "anyHost": "Any host",
     "refresh": "Ask every host again",
     "count": "{{rows}} rows from {{hosts}} hosts",
     "selected": "{{count}} selected",
@@ -244,7 +248,11 @@
     "searchActions": "Search actions for this host",
     "noActions": "No actions match",
     "recent": "Recent changes",
-    "noRuns": "Nothing has run here yet"
+    "noRuns": "Nothing has run here yet",
+    "openFor": "Host page for {{name}}",
+    "actionCount": "{{count}} actions",
+    "plugin": "Plugin",
+    "allPlugins": "All plugins ({{count}})"
   },
   "attention": {
     "title": "Needs attention",
@@ -274,5 +282,22 @@
     "linksDescription": "Web addresses plugins know about, such as proxy routes, with nothing to type in",
     "noLinks": "No links found yet",
     "byHost": "Group by host"
+  },
+  "companion": {
+    "title": "Host page"
+  },
+  "settings": {
+    "user": {
+      "attentionDot": {
+        "label": "Show the attention dot",
+        "description": "A dot next to a host's name in the host list while one of its status tiles is warning or failing."
+      }
+    }
+  },
+  "pager": {
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {{page}}",
+    "pageOf": "Page {{page}} of {{pages}}"
   }
 }

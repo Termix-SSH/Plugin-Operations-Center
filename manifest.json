@@ -19,6 +19,8 @@
     "Rules for what needs approval, by risk, plugin, action, where it came from and host tag",
     "Drift checks that watch hosts stay the way they should, with an optional fix",
     "A page per host with every tool, status tiles and recent changes in one tab",
+    "The host page beside every terminal, in the tab bar and in the host menu",
+    "A dot on the host list when a host needs attention",
     "Tables across every host, such as all containers or services, with bulk actions",
     "An MCP server so outside AI tools can use Termix actions with an API key",
     "A Needs attention card on the dashboard",
@@ -85,6 +87,17 @@
     ],
     "operations": {
       "invokes": ["*"]
+    },
+    "settings": {
+      "user": [
+        {
+          "key": "attentionDot",
+          "type": "boolean",
+          "labelKey": "settings.user.attentionDot.label",
+          "descriptionKey": "settings.user.attentionDot.description",
+          "default": true
+        }
+      ]
     }
   }
 }

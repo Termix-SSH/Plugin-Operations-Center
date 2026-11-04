@@ -1,4 +1,10 @@
-import { useEffect, useMemo, useState, type ComponentType } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import {
   useHostStatus,
   useTranslation,
@@ -19,6 +25,7 @@ import { ExternalLink, LayoutDashboard, Pencil, Server } from "lucide-react";
 import { getCatalog, type Catalog } from "./api";
 import { appliesTo, hostLabel, splitTags } from "./hosts";
 import { HostOverview } from "./HostOverview";
+import { FRESH_MS, useSectionRequest } from "./host-page-nav";
 
 type HostAction = ReturnType<typeof useHostActions>[number];
 
@@ -26,9 +33,9 @@ type HostAction = ReturnType<typeof useHostActions>[number];
 const PAGE_TAB = "host";
 
 /**
- * Everything about one host on one tab. Each tool a plugin offers for the
- * host opens inside the page, so ten tools are one tab instead of ten.
- * Sessions such as a terminal keep their own tabs.
+ * Everything about one host on one tab. Each tool and session a plugin
+ * offers for the host opens inside the page and stays alive while you move
+ * between them, so ten tools are one tab instead of ten.
  */
 export function HostPage({ host, tab, isVisible, shell }: TabProps) {
   const { t, language } = useTranslation();
@@ -50,6 +57,20 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
     }
   }, [wanted]);
 
+  // A tool button on the host row asked for a section of this page.
+  const request = useSectionRequest(host?.id);
+  const seenRequest = useRef<number | null>(null);
+  useEffect(() => {
+    if (!request || seenRequest.current === request.seq) return;
+    const first = seenRequest.current === null;
+    seenRequest.current = request.seq;
+    if (first && Date.now() - request.at > FRESH_MS) return;
+    setSection(request.section);
+    if (request.section !== "overview") {
+      setOpened((prev) => new Set(prev).add(request.section));
+    }
+  }, [request]);
+
   useEffect(() => {
     void getCatalog(language)
       .then(setCatalog)
@@ -61,6 +82,10 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
     [all, host],
   );
   const connect = actions.filter((action) => action.kind === "connect");
+  // Sessions such as the terminal open inside the page too, next to the tools.
+  const sessions = connect.filter(
+    (action) => !!action.tabType && !action.run && !action.items,
+  );
   const tools = actions.filter(
     (action: HostAction) =>
       action.kind === "open" && !!action.tabType && action.tabType !== PAGE_TAB,
@@ -84,7 +109,9 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
     setSection(id);
     if (id !== "overview") setOpened((prev) => new Set(prev).add(id));
   };
-  const current = tools.find((tool) => tool.tabType === section);
+  const inPage = (action: HostAction) => sessions.includes(action);
+  const popOut = (type: string) =>
+    shell.openTab(host as never, type, { forceNewTab: true });
   const tags = splitTags(host.tags);
 
   return (
@@ -114,9 +141,15 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
               <Button
                 key={action.id}
                 size="sm"
-                variant="outline"
+                variant={
+                  inPage(action) && section === action.tabType
+                    ? "default"
+                    : "outline"
+                }
                 onClick={() =>
-                  runHostAction(action, host as never, shell as never)
+                  inPage(action)
+                    ? open(action.tabType!)
+                    : runHostAction(action, host as never, shell as never)
                 }
               >
                 <Icon className="mr-1 size-3.5" />
@@ -145,6 +178,20 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
             label={t("host.overview")}
             onClick={() => open("overview")}
           />
+          {sessions.map((session) => (
+            <NavButton
+              key={session.id}
+              active={section === session.tabType}
+              icon={session.icon as ComponentType<{ className?: string }>}
+              label={session.label?.(host as never) ?? t(session.titleKey)}
+              onClick={() => open(session.tabType!)}
+              onPopOut={() => popOut(session.tabType!)}
+              popOutLabel={t("host.popOut")}
+            />
+          ))}
+          {sessions.length > 0 && tools.length > 0 && (
+            <div className="my-1 h-px shrink-0 bg-border" />
+          )}
           {tools.map((tool) => (
             <NavButton
               key={tool.id}
@@ -152,6 +199,8 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
               icon={tool.icon as ComponentType<{ className?: string }>}
               label={tool.label?.(host as never) ?? t(tool.titleKey)}
               onClick={() => open(tool.tabType!)}
+              onPopOut={() => popOut(tool.tabType!)}
+              popOutLabel={t("host.popOut")}
             />
           ))}
         </nav>
@@ -175,22 +224,6 @@ export function HostPage({ host, tab, isVisible, shell }: TabProps) {
                 key={type}
                 className={`absolute inset-0 flex flex-col ${shown ? "" : "hidden"}`}
               >
-                {shown && current && (
-                  <div className="flex shrink-0 justify-end border-b border-border px-2 py-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        shell.openTab(host as never, type, {
-                          forceNewTab: true,
-                        })
-                      }
-                    >
-                      <ExternalLink className="mr-1 size-3.5" />
-                      {t("host.popOut")}
-                    </Button>
-                  </div>
-                )}
                 <div className="min-h-0 flex-1">
                   <HostTabEmbed
                     host={host as never}
@@ -213,21 +246,41 @@ function NavButton({
   icon: Icon,
   label,
   onClick,
+  onPopOut,
+  popOutLabel,
 }: {
   active: boolean;
   icon: ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
+  /** Opens it in a normal tab instead, for split view. */
+  onPopOut?: () => void;
+  popOutLabel?: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center gap-2 px-2 py-1.5 text-left text-xs ${active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60"}`}
+    <div
+      className={`group flex items-center ${active ? "bg-muted font-medium text-foreground" : "text-muted-foreground hover:bg-muted/60"}`}
     >
-      <Icon className="size-3.5 shrink-0" />
-      <span className="truncate">{label}</span>
-    </button>
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex min-w-0 flex-1 items-center gap-2 px-2 py-1.5 text-left text-xs"
+      >
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate">{label}</span>
+      </button>
+      {onPopOut && (
+        <button
+          type="button"
+          title={popOutLabel}
+          aria-label={popOutLabel}
+          onClick={onPopOut}
+          className={`mr-1 shrink-0 p-1 text-muted-foreground hover:text-foreground ${active ? "" : "opacity-0 group-hover:opacity-100 focus:opacity-100"}`}
+        >
+          <ExternalLink className="size-3" />
+        </button>
+      )}
+    </div>
   );
 }
 

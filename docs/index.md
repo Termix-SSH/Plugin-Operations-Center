@@ -5,7 +5,7 @@ Open it from the Operations button in the rail, or search for an action in the c
 ## Run an action
 
 1. Open Operations and pick Run.
-2. Search for an action and pick it. Only hosts where the action applies are offered.
+2. Search for an action and pick it, or pick a plugin to see only its actions. Only hosts where the action applies are offered.
 3. For an action on one item, such as a container, pick it from the list.
 4. Fill in the form and press Dry run to see what would happen, or Run.
 
@@ -15,16 +15,29 @@ Every run is checked the same way wherever it starts: your role permissions, you
 
 Each host has a Host page. Open it from the host's menu or the Host page button. It has:
 
-- The host's status and the buttons to connect.
+- The host's status and the buttons to connect. Terminal, remote desktop and other sessions open inside the page.
 - Status tiles from every plugin, such as unhealthy containers or failed services, with a fix button.
 - How many containers, services and other things the host has.
-- A search box for every action on the host.
-- Recent changes on the host.
-- Every tool for the host on the left. Tools open inside the page, so you need one tab instead of ten. Open in its own tab puts a tool back in a normal tab, for split view.
+- Every action on the host, by plugin, 10 to a page. Search finds any of them, and the plugin list next to it shows one plugin's actions. Actions that work on one thing, such as restarting a container, ask which one.
+- Recent changes on the host, a page at a time.
+- Every session and tool for the host on the left. They open inside the page and keep running while you move between them, so you need one tab instead of ten. Open in its own tab puts one back in a normal tab, for split view.
+
+The tool buttons on a host row still open their own tabs, like always. To open them inside the host page instead, go to Customize sidebar and set Open host tools in to The host page. Then each button shows that tool on the host's page, and a page already open for the host is reused.
+
+Pick Only the host page to make the page the one way to work with a host. Host rows lose their connect buttons, and a click on a host opens its page. Ctrl click or middle click still opens a second page.
+
+The host page also shows up in other places:
+
+- Beside a terminal, as a panel with the host's status tiles and actions. Open it from the panel bar on the terminal's edge.
+- In the tab bar, where the Host page button opens the page for the host you are working on. Right click a tab for the same thing.
+- On the host row, where a dot shows next to the name while one of the host's status tiles is warning or failing. Hover it to see which. Turn it off with Show the attention dot in this plugin's settings.
+- In the host's menu, under Actions, with one list per plugin. Actions with nothing to fill in run right away; the rest open with their form.
 
 ## All hosts
 
-All hosts shows one kind of thing across every host, such as every container or every service. Filter and search the table, select rows on any hosts and run an action on all of them at once. Click a host name to open its host page. Hosts answer in the background, so the table fills in as they reply.
+All hosts shows one kind of thing across every host, such as every container or every service. Filter by host or status, search the table, select rows on any hosts and run an action on all of them at once. Click a host name to open its host page. Hosts answer in the background, so the table fills in as they reply.
+
+History can show one action, one host or one status. Long lists in every view show a page at a time.
 
 ## Rollouts
 

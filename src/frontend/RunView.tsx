@@ -14,13 +14,7 @@ import {
   useConfirm,
 } from "@termix-ssh/plugin-sdk/ui";
 import { Play, Search, Zap } from "lucide-react";
-import {
-  errorText,
-  getResources,
-  runAction,
-  type CatalogAction,
-  type Outcome,
-} from "./api";
+import { errorText, runAction, type CatalogAction, type Outcome } from "./api";
 import {
   ActionForm,
   cleanValues,
@@ -28,7 +22,16 @@ import {
   type FormValues,
 } from "./ActionForm";
 import { appliesTo, hostLabel } from "./hosts";
-import { Choice, RiskBadge, StateBadge } from "./parts";
+import {
+  Choice,
+  Pager,
+  PluginChoice,
+  RiskBadge,
+  StateBadge,
+  filterActions,
+  usePaged,
+} from "./parts";
+import { TargetField, useResourceChoices } from "./targets";
 
 /** Picks one action and one host, then dry runs or runs it. */
 export function RunView({
@@ -55,6 +58,7 @@ export function RunView({
   const confirm = useConfirm();
   const { hosts } = useHosts();
   const [query, setQuery] = useState("");
+  const [plugin, setPlugin] = useState("");
   const [actionId, setActionId] = useState(initialActionId ?? "");
   const action = actions.find((entry) => entry.id === actionId);
   const [hostId, setHostId] = useState<number | undefined>(initialHostId);
@@ -62,7 +66,6 @@ export function RunView({
   const [values, setValues] = useState<FormValues>({});
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
-  const [choices, setChoices] = useState<{ key: string; name: string }[]>([]);
 
   useEffect(() => {
     setValues(action ? initialValues(action.inputs) : {});
@@ -89,49 +92,25 @@ export function RunView({
   }, [action, candidates, hostId]);
 
   // A resource action picks its target from the resource's own list.
-  useEffect(() => {
-    setChoices([]);
-    if (!action?.resource || hostId === undefined) return;
-    let stop = false;
-    const load = async (attempt: number) => {
-      try {
-        const result = await getResources(action.resource!, {
-          hostIds: [hostId],
-        });
-        if (stop) return;
-        const state = result.hosts[0]?.state;
-        if (state === "loading" && attempt < 10) {
-          setTimeout(() => void load(attempt + 1), 1500);
-          return;
-        }
-        setChoices(
-          result.rows.map((row) => ({
-            key: row.key,
-            name: String(row.row.name ?? row.key),
-          })),
-        );
-      } catch {
-        // The picker stays empty and a key can still be typed.
-      }
-    };
-    void load(0);
-    return () => {
-      stop = true;
-    };
-  }, [action, hostId]);
+  const choices = useResourceChoices(action, hostId);
 
-  const filtered = useMemo(() => {
-    const text = query.trim().toLowerCase();
-    return actions
-      .filter((entry) => entry.risk !== "read" || entry.scope !== "resource")
-      .filter(
-        (entry) =>
-          !text ||
-          entry.title.toLowerCase().includes(text) ||
-          entry.pluginName.toLowerCase().includes(text) ||
-          entry.id.includes(text),
-      );
-  }, [actions, query]);
+  const listed = useMemo(
+    () =>
+      actions
+        .filter((entry) => entry.risk !== "read" || entry.scope !== "resource")
+        .sort(
+          (a, b) =>
+            a.pluginName.localeCompare(b.pluginName) ||
+            a.title.localeCompare(b.title),
+        ),
+    [actions],
+  );
+  const { matching: filtered, plugin: shownPlugin } = filterActions(
+    listed,
+    plugin,
+    query,
+  );
+  const shown = usePaged(filtered, 20, `${shownPlugin}|${query}`);
 
   const run = async (dryRun: boolean) => {
     if (!action) return;
@@ -165,13 +144,20 @@ export function RunView({
   if (!action) {
     return (
       <div className="flex min-h-0 flex-1 flex-col gap-2">
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" />
-          <Input
-            className="pl-7"
-            value={query}
-            placeholder={t("run.search")}
-            onChange={(event) => setQuery(event.target.value)}
+        <div className="flex flex-wrap gap-2">
+          <div className="relative min-w-48 flex-1">
+            <Search className="absolute left-2 top-2.5 size-3.5 text-muted-foreground" />
+            <Input
+              className="pl-7"
+              value={query}
+              placeholder={t("run.search")}
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          </div>
+          <PluginChoice
+            actions={listed}
+            value={shownPlugin}
+            onChange={setPlugin}
           />
         </div>
         {filtered.length === 0 ? (
@@ -182,7 +168,7 @@ export function RunView({
           />
         ) : (
           <div className="flex flex-col gap-1 overflow-auto">
-            {filtered.map((entry) => (
+            {shown.rows.map((entry) => (
               <ListRow
                 key={entry.id}
                 title={entry.title}
@@ -193,6 +179,11 @@ export function RunView({
                 onClick={() => setActionId(entry.id)}
               />
             ))}
+            <Pager
+              page={shown.page}
+              pages={shown.pages}
+              onPage={shown.setPage}
+            />
           </div>
         )}
       </div>
@@ -244,27 +235,11 @@ export function RunView({
         ))}
 
       {action.scope === "resource" && (
-        <Field label={t("run.target")} hint={t("run.targetHint")}>
-          {choices.length > 0 ? (
-            <Choice
-              label={t("run.target")}
-              value={resourceKey}
-              onChange={setResourceKey}
-              options={[
-                { value: "", label: t("form.choose") },
-                ...choices.map((choice) => ({
-                  value: choice.key,
-                  label: choice.name,
-                })),
-              ]}
-            />
-          ) : (
-            <Input
-              value={resourceKey}
-              onChange={(event) => setResourceKey(event.target.value)}
-            />
-          )}
-        </Field>
+        <TargetField
+          choices={choices}
+          value={resourceKey}
+          onChange={setResourceKey}
+        />
       )}
 
       <ActionForm
