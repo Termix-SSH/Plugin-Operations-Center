@@ -5,6 +5,7 @@ import { AttentionCard } from "./AttentionCard";
 import { HostPage } from "./HostPage";
 import { appliesTo } from "./hosts";
 import { OperationsTab } from "./OperationsTab";
+import { registerWidgets } from "./widgets";
 
 const TAB = "operations";
 const HOST_TAB = "host";
@@ -115,4 +116,6 @@ export function activate(app: TermixApp): void {
         }));
     },
   });
+
+  registerWidgets(app);
 }

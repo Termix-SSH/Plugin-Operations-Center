@@ -67,3 +67,10 @@ Only actions a plugin marked safe for MCP are offered. Changes follow the approv
 ## Needs attention
 
 Add the Needs attention card to the dashboard to see failing status tiles, waiting approvals, failed runs, drifted hosts and stopped rollouts in one place.
+
+## Homepage widgets
+
+With the Homepage plugin on, add these widgets to your homepage:
+
+- Status tiles: what every plugin reports about your hosts. Pick which tiles to show, or only the ones with a problem.
+- Action button: one button that runs an action, such as restarting a service on a host. It goes through the same checks and rules as any other run.

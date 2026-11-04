@@ -257,5 +257,18 @@
     "drifted_one": "{{count}} host drifted",
     "drifted_other": "{{count}} hosts drifted",
     "rollout": "Rollout {{name}} stopped"
+  },
+  "widgets": {
+    "tiles": "Status tiles",
+    "tilesDescription": "What every plugin reports about your hosts, such as unhealthy containers or failed services",
+    "button": "Action button",
+    "buttonDescription": "One button that runs an action, such as restarting a service",
+    "allGood": "Nothing needs a look",
+    "noTiles": "No status yet",
+    "problemsOnly": "Only show problems",
+    "which": "Show these. None picked shows all.",
+    "action": "Action",
+    "pickAction": "Pick an action",
+    "label": "Button text"
   }
 }

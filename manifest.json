@@ -21,7 +21,8 @@
     "A page per host with every tool, status tiles and recent changes in one tab",
     "Tables across every host, such as all containers or services, with bulk actions",
     "An MCP server so outside AI tools can use Termix actions with an API key",
-    "A Needs attention card on the dashboard"
+    "A Needs attention card on the dashboard",
+    "Status tiles and one click action buttons for the homepage"
   ],
   "env": [],
   "engine": {

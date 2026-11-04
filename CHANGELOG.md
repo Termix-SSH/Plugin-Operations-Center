@@ -15,3 +15,4 @@
 - MCP server for outside AI tools, using an API key
 - Needs attention dashboard card
 - Every action in the command palette
+- Status tiles and action button widgets for the homepage

@@ -30,6 +30,7 @@ Read the [docs](https://docs.termix.site/plugins/operations-center) to set it up
 - Tables across every host, such as all containers or services, with bulk actions
 - An MCP server so outside AI tools can use Termix actions with an API key
 - A Needs attention card on the dashboard
+- Status tiles and one click action buttons for the homepage
 
 <br />
 
