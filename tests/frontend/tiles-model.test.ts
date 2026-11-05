@@ -113,6 +113,28 @@ describe("defaultHostTiles", () => {
     for (const slot of defaultHostTiles(sources))
       expect(slot.x + slot.w).toBeLessThanOrEqual(12);
   });
+
+  it("leaves no gap above the actions tile on either side", () => {
+    const tiles = defaultHostTiles({
+      ...sources,
+      plugins: ["m.cpu", "m.disk", "m.memory", "m.network"],
+      actions: [
+        action("a.one"),
+        action("a.two"),
+        action("a.three"),
+        action("a.four"),
+      ],
+    });
+    const actions = tiles.find((s) => s.id === "actions")!;
+    const bottom = (half: (s: (typeof tiles)[number]) => boolean) =>
+      Math.max(
+        ...tiles
+          .filter((s) => s.id !== "actions" && half(s))
+          .map((s) => s.y + (s.h ?? 0)),
+      );
+    expect(bottom((s) => s.x < 6)).toBe(actions.y);
+    expect(bottom((s) => s.x + s.w > 6)).toBe(actions.y);
+  });
 });
 
 describe("shared layouts", () => {
