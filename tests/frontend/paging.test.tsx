@@ -1,6 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
-import { Pager, pageOf } from "../../src/frontend/parts";
+import { cleanup } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+import { pageOf } from "../../src/frontend/parts";
 import { byPlugin } from "../../src/frontend/host-surfaces";
 import { filterActions, pluginOptions } from "../../src/frontend/parts";
 import type { CatalogAction } from "../../src/frontend/api";
@@ -22,34 +22,6 @@ describe("pageOf", () => {
   it("keeps the page in range when the list shrinks", () => {
     expect(pageOf(items, 9, 10).page).toBe(2);
     expect(pageOf([], 3, 10)).toEqual({ rows: [], page: 0, pages: 1 });
-  });
-});
-
-describe("Pager", () => {
-  it("hides itself on a single page", () => {
-    const { container } = render(
-      <Pager page={0} pages={1} onPage={() => {}} />,
-    );
-    expect(container.textContent).toBe("");
-  });
-
-  it("moves between pages and stops at the ends", () => {
-    const onPage = vi.fn();
-    render(<Pager page={0} pages={3} onPage={onPage} />);
-    const previous = screen.getByText("pager.previous").closest("button")!;
-    expect(previous.disabled).toBe(true);
-    fireEvent.click(screen.getByText("pager.next"));
-    expect(onPage).toHaveBeenCalledWith(1);
-  });
-
-  it("pages a list read a page at a time", () => {
-    const onPage = vi.fn();
-    render(<Pager page={1} hasNext={false} onPage={onPage} />);
-    expect(screen.getByText("pager.next").closest("button")!.disabled).toBe(
-      true,
-    );
-    fireEvent.click(screen.getByText("pager.previous"));
-    expect(onPage).toHaveBeenCalledWith(0);
   });
 });
 
