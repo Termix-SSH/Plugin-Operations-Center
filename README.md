@@ -4,7 +4,7 @@
 
 <h1>Operations Center</h1>
 
-<p>Run, roll out, approve and track every plugin action across your hosts</p>
+<p>Run, roll out, approve and track every plugin action across your hosts, with a page per host and tables across all of them</p>
 
 </div>
 
