@@ -122,7 +122,7 @@ export function HostCardsView({
       {cards.length === 0 ? (
         <EmptyState icon={Server} title={t("hostCards.none")} />
       ) : (
-        <div className="min-h-0 overflow-auto thin-scrollbar">
+        <div className="min-h-0 flex-1 overflow-auto thin-scrollbar">
           <TileWall gridClassName={grid}>
             {cards.map(({ host, tiles, worst }) => (
               <HostCard
