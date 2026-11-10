@@ -6,6 +6,12 @@
 
 <p>Run, roll out, approve and track every plugin action across your hosts, with a page per host and tables across all of them</p>
 
+<!-- VIDEO:START -->
+
+<a href="https://www.youtube.com/watch?v=0EUwEVouWJE"><img src="https://img.shields.io/badge/Watch_the_demo-f59145?style=for-the-badge&logo=youtube&logoColor=white" alt="Watch the demo on YouTube" /></a>
+
+<!-- VIDEO:END -->
+
 </div>
 
 <br />
