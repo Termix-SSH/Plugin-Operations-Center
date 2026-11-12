@@ -1,0 +1,204 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Termix-SSH/Termix/main/scripts/authz/authz.schema.json",
+  "seed": [
+    {
+      "as": "owner",
+      "method": "POST",
+      "path": "/plugin-api/operations-center/baselines",
+      "body": {
+        "name": "authz-own-baseline",
+        "checkActionId": "alerts.unread",
+        "targets": {
+          "hostIds": ["{{host}}"]
+        },
+        "autoFix": false
+      },
+      "capture": {
+        "operations-center.baselines": "baselines.-1.id"
+      }
+    },
+    {
+      "as": "owner",
+      "method": "POST",
+      "path": "/plugin-api/operations-center/rollouts",
+      "body": {
+        "actionId": "alerts.unread",
+        "targets": {
+          "hostIds": ["{{host}}"]
+        },
+        "canary": 1,
+        "batchSize": 1
+      },
+      "capture": {
+        "operations-center.rollouts": "rollout.id"
+      }
+    },
+    {
+      "as": "admin",
+      "method": "POST",
+      "path": "/plugin-api/operations-center/rules",
+      "body": {
+        "name": "authz-own-rule",
+        "effect": "deny",
+        "minRisk": "change"
+      },
+      "capture": {
+        "operations-center.rules": "rules.-1.id"
+      }
+    }
+  ],
+  "routes": {
+    "GET /plugin-api/operations-center/attention": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "GET /plugin-api/operations-center/baselines": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "POST /plugin-api/operations-center/baselines": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "DELETE /plugin-api/operations-center/baselines/:id": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.baselines"
+      },
+      "params": {
+        "id": "operations-center.baselines"
+      },
+      "destructive": true
+    },
+    "GET /plugin-api/operations-center/baselines/:id/results": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.baselines"
+      },
+      "params": {
+        "id": "operations-center.baselines"
+      }
+    },
+    "POST /plugin-api/operations-center/baselines/:id/run": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.baselines"
+      },
+      "params": {
+        "id": "operations-center.baselines"
+      },
+      "destructive": true
+    },
+    "GET /plugin-api/operations-center/mcp": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "POST /plugin-api/operations-center/mcp": {
+      "access": "user",
+      "permission": ["operations-center.use", "operations-center.mcp"]
+    },
+    "GET /plugin-api/operations-center/rollouts": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "POST /plugin-api/operations-center/rollouts": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "DELETE /plugin-api/operations-center/rollouts/:id": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      },
+      "destructive": true
+    },
+    "GET /plugin-api/operations-center/rollouts/:id": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      }
+    },
+    "POST /plugin-api/operations-center/rollouts/:id/pause": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      }
+    },
+    "POST /plugin-api/operations-center/rollouts/:id/retry": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      }
+    },
+    "POST /plugin-api/operations-center/rollouts/:id/start": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      },
+      "destructive": true
+    },
+    "POST /plugin-api/operations-center/rollouts/:id/stop": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rollouts"
+      },
+      "params": {
+        "id": "operations-center.rollouts"
+      },
+      "destructive": true
+    },
+    "GET /plugin-api/operations-center/rules": {
+      "access": "user",
+      "permission": "operations-center.use"
+    },
+    "POST /plugin-api/operations-center/rules": {
+      "access": "user",
+      "permission": ["operations-center.use", "operations-center.rules"]
+    },
+    "DELETE /plugin-api/operations-center/rules/:id": {
+      "access": "user",
+      "permission": ["operations-center.use", "operations-center.rules"],
+      "resource": {
+        "kind": "own",
+        "fixture": "operations-center.rules"
+      },
+      "params": {
+        "id": "operations-center.rules"
+      },
+      "destructive": true
+    }
+  }
+}
