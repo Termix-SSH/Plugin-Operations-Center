@@ -579,21 +579,109 @@ export function registerRoutes(
         }),
       );
     } catch (error) {
-      const status = (error as { status?: unknown }).status;
-      res
-        .status(
-          typeof status === "number" && status >= 400 && status < 500
-            ? status
-            : 500,
-        )
-        .json({
-          error:
-            typeof status === "number" && status < 500
-              ? error instanceof Error
-                ? error.message
-                : String(error)
-              : "Request failed",
-        });
+      sendCoreError(res, error);
     }
+  });
+
+  // Core added these in plugin API 2.6; an older core has no runs here.
+  type Runs = {
+    cancel: (input: { runId: string }) => Promise<{ cancelled: boolean }>;
+    undo: (input: { runId: string; confirmed?: boolean }) => Promise<unknown>;
+  };
+  const coreRuns = (res: Response): Runs | null => {
+    const runs = (ctx.operations as { runs?: Runs }).runs;
+    if (!runs) {
+      res.status(501).json({ error: "This Termix version can't do that" });
+      return null;
+    }
+    return runs;
+  };
+
+  /**
+   * @openapi
+   * /plugin-api/operations-center/runs/{id}/cancel:
+   *   post:
+   *     summary: Cancel a run
+   *     description: Core cancels as the signed in person, with their own rights. API keys are refused.
+   *     tags:
+   *       - Operations Center
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     responses:
+   *       200:
+   *         description: Whether anything was cancelled.
+   *       404:
+   *         description: Not found, or not visible to the caller.
+   */
+  router.post("/runs/:id/cancel", async (req, res) => {
+    if (!actor(ctx, res)) return;
+    const runs = coreRuns(res);
+    if (!runs) return;
+    try {
+      res.json(await runs.cancel({ runId: String(req.params.id) }));
+    } catch (error) {
+      sendCoreError(res, error);
+    }
+  });
+
+  /**
+   * @openapi
+   * /plugin-api/operations-center/runs/{id}/undo:
+   *   post:
+   *     summary: Undo a run
+   *     description: Core runs the action's undo as the signed in person, through the same checks as any run. API keys are refused.
+   *     tags:
+   *       - Operations Center
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             properties:
+   *               confirmed:
+   *                 type: boolean
+   *     responses:
+   *       200:
+   *         description: The new run.
+   *       404:
+   *         description: Not found, or nothing to undo.
+   */
+  router.post("/runs/:id/undo", async (req, res) => {
+    if (!actor(ctx, res)) return;
+    const runs = coreRuns(res);
+    if (!runs) return;
+    try {
+      res.json(
+        await runs.undo({
+          runId: String(req.params.id),
+          confirmed: (req.body as { confirmed?: unknown })?.confirmed === true,
+        }),
+      );
+    } catch (error) {
+      sendCoreError(res, error);
+    }
+  });
+}
+
+/** Passes on core's 4xx with its message; anything else is a plain 500. */
+function sendCoreError(res: Response, error: unknown): void {
+  const status = (error as { status?: unknown }).status;
+  const client = typeof status === "number" && status >= 400 && status < 500;
+  res.status(client ? status : 500).json({
+    error: client
+      ? error instanceof Error
+        ? error.message
+        : String(error)
+      : "Request failed",
   });
 }

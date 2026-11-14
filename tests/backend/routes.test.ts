@@ -281,3 +281,70 @@ describe("deciding approvals", () => {
     expect(status).toBe(403);
   });
 });
+
+describe("cancel and undo", () => {
+  type Runs = {
+    cancel: (input: unknown) => Promise<unknown>;
+    undo: (input: unknown) => Promise<unknown>;
+  };
+  const withRuns = (runs: Runs) => {
+    (server.mock.ctx.operations as { runs?: Runs }).runs = runs;
+  };
+
+  it("cancels and undoes through core as the signed in person", async () => {
+    server = await startServer();
+    const seen: unknown[] = [];
+    withRuns({
+      cancel: async (input) => {
+        seen.push(["cancel", input]);
+        return { cancelled: true };
+      },
+      undo: async (input) => {
+        seen.push(["undo", input]);
+        return { runId: "u", status: "success" };
+      },
+    });
+    const cancel = await server.request("POST", "/runs/r1/cancel");
+    expect(cancel.status).toBe(200);
+    expect(cancel.body).toEqual({ cancelled: true });
+    const undo = await server.request("POST", "/runs/r1/undo", {
+      body: { confirmed: true, userId: "admin" },
+    });
+    expect(undo.status).toBe(200);
+    expect(seen).toEqual([
+      ["cancel", { runId: "r1" }],
+      ["undo", { runId: "r1", confirmed: true }],
+    ]);
+  });
+
+  it("passes core's refusal on", async () => {
+    server = await startServer();
+    withRuns({
+      cancel: async () => {
+        throw Object.assign(new Error("Run not found"), { status: 404 });
+      },
+      undo: async () => {
+        throw new Error("boom");
+      },
+    });
+    const cancel = await server.request("POST", "/runs/r1/cancel");
+    expect(cancel.status).toBe(404);
+    expect(cancel.body.error).toBe("Run not found");
+    const undo = await server.request("POST", "/runs/r1/undo");
+    expect(undo.status).toBe(500);
+    expect(undo.body.error).toBe("Request failed");
+  });
+
+  it("says so on a core without runs", async () => {
+    server = await startServer();
+    delete (server.mock.ctx.operations as { runs?: Runs }).runs;
+    const { status } = await server.request("POST", "/runs/r1/cancel");
+    expect(status).toBe(501);
+  });
+
+  it("needs the use permission", async () => {
+    server = await startServer({ permissions: [] });
+    const { status } = await server.request("POST", "/runs/r1/undo");
+    expect(status).toBe(403);
+  });
+});
