@@ -240,10 +240,11 @@ export async function decideApproval(
   approve: boolean,
   comment?: string,
 ): Promise<Outcome> {
-  const { data } = await operationsApi.post<Outcome>(`/approvals/${id}`, {
-    approve,
-    comment,
-  });
+  // Decided through our own route, so the frame never decides it itself.
+  const { data } = await plugin().post<Outcome>(
+    `/approvals/${encodeURIComponent(id)}`,
+    { approve, comment },
+  );
   return data;
 }
 

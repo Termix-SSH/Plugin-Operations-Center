@@ -528,4 +528,72 @@ export function registerRoutes(
   router.get("/mcp", (_req, res) => {
     res.status(405).set("Allow", "POST").end();
   });
+
+  /**
+   * @openapi
+   * /plugin-api/operations-center/approvals/{id}:
+   *   post:
+   *     summary: Approve or reject a waiting action
+   *     description: Core decides as the signed in person, with their own rights. What runs is the sealed request, never anything sent here. API keys are refused.
+   *     tags:
+   *       - Operations Center
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *     requestBody:
+   *       required: true
+   *       content:
+   *         application/json:
+   *           schema:
+   *             type: object
+   *             required: [approve]
+   *             properties:
+   *               approve:
+   *                 type: boolean
+   *               comment:
+   *                 type: string
+   *     responses:
+   *       200:
+   *         description: The run's outcome.
+   *       403:
+   *         description: The caller may not decide this.
+   *       409:
+   *         description: Already decided, expired, or the host changed.
+   */
+  router.post("/approvals/:id", async (req, res) => {
+    if (!actor(ctx, res)) return;
+    const body = (req.body ?? {}) as { approve?: unknown; comment?: unknown };
+    if (typeof body.approve !== "boolean") {
+      res.status(400).json({ error: "approve must be true or false" });
+      return;
+    }
+    try {
+      res.json(
+        await ctx.operations.approvals.decide({
+          approvalId: String(req.params.id),
+          approve: body.approve,
+          comment: typeof body.comment === "string" ? body.comment : undefined,
+        }),
+      );
+    } catch (error) {
+      const status = (error as { status?: unknown }).status;
+      res
+        .status(
+          typeof status === "number" && status >= 400 && status < 500
+            ? status
+            : 500,
+        )
+        .json({
+          error:
+            typeof status === "number" && status < 500
+              ? error instanceof Error
+                ? error.message
+                : String(error)
+              : "Request failed",
+        });
+    }
+  });
 }

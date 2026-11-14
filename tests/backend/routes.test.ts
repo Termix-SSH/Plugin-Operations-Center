@@ -232,3 +232,52 @@ describe("drift", () => {
     expect(attention.body.running).toBe(0);
   });
 });
+
+describe("deciding approvals", () => {
+  it("decides through core as the signed in person", async () => {
+    server = await startServer();
+    const seen: unknown[] = [];
+    server.mock.ctx.operations.approvals.decide = async (input) => {
+      seen.push(input);
+      return { runId: "r", status: "success" };
+    };
+    const { status, body } = await server.request("POST", "/approvals/abc", {
+      body: { approve: true, comment: "fine" },
+    });
+    expect(status).toBe(200);
+    expect(body).toEqual({ runId: "r", status: "success" });
+    expect(seen).toEqual([
+      { approvalId: "abc", approve: true, comment: "fine" },
+    ]);
+  });
+
+  it("needs a yes or no", async () => {
+    server = await startServer();
+    const { status } = await server.request("POST", "/approvals/abc", {
+      body: {},
+    });
+    expect(status).toBe(400);
+  });
+
+  it("passes core's refusal on", async () => {
+    server = await startServer();
+    server.mock.ctx.operations.approvals.decide = async () => {
+      throw Object.assign(new Error("This was already decided"), {
+        status: 409,
+      });
+    };
+    const { status, body } = await server.request("POST", "/approvals/abc", {
+      body: { approve: false },
+    });
+    expect(status).toBe(409);
+    expect(body.error).toBe("This was already decided");
+  });
+
+  it("needs the use permission", async () => {
+    server = await startServer({ permissions: [] });
+    const { status } = await server.request("POST", "/approvals/abc", {
+      body: { approve: true },
+    });
+    expect(status).toBe(403);
+  });
+});
