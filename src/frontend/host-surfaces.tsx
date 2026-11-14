@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ComponentType } from "react";
 import {
+  useHost,
   useHostStatus,
   useSettings,
   useShell,
@@ -212,8 +213,13 @@ export function TabBarHostPageButton({
   const { t } = useTranslation();
   const live = useShell();
   const active = live?.tabs.list.find((tab) => tab.id === live.tabs.activeId);
-  const host =
-    active?.host && active.type !== HOST_TAB ? active.host : targetTab?.host;
+  // In a frame a tab carries its host id, not the host.
+  const activeHost = useHost(
+    active && active.type !== HOST_TAB
+      ? (active.host?.id ?? (active as { hostId?: string | number }).hostId)
+      : undefined,
+  );
+  const host = activeHost ?? targetTab?.host;
   const label = host
     ? t("host.openFor", { name: hostLabel(host) })
     : t("host.open");

@@ -5,6 +5,7 @@
 ### Changed
 
 - Runs in its own process on Termix 26.11.2 and later, with no access to the server beyond what Termix allows it
+- Host page tiles from other plugins draw in their own frames over the page, and the tab bar button finds the host of the tab you are on (needs Termix 26.11.2)
 
 ## 1.0.0
 

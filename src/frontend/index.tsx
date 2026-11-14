@@ -177,7 +177,11 @@ export function activate(app: TermixApp): void {
   });
 
   // Other plugins add their own tiles to the host page here.
-  app.declareActionSlot({ id: HOST_TILES_SLOT, accepts: ["component"] });
+  app.declareActionSlot({
+    id: HOST_TILES_SLOT,
+    accepts: ["component"],
+    fit: "fill",
+  });
 
   app.registerPaletteEntry({
     id: "open",
