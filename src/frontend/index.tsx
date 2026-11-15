@@ -144,7 +144,11 @@ export function activate(app: TermixApp): void {
     host: PluginHostRecord;
   }) =>
     canUse ? (
-      <HostMenuActions host={props.host} shell={app.tabs} />
+      <HostMenuActions
+        host={props.host}
+        shell={app.tabs}
+        framed={Boolean(app.frame)}
+      />
     ) : null) as unknown as ComponentType<Record<string, unknown>>);
 
   app.registerDashboardCard({
