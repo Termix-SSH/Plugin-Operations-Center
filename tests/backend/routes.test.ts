@@ -232,3 +232,119 @@ describe("drift", () => {
     expect(attention.body.running).toBe(0);
   });
 });
+
+describe("deciding approvals", () => {
+  it("decides through core as the signed in person", async () => {
+    server = await startServer();
+    const seen: unknown[] = [];
+    server.mock.ctx.operations.approvals.decide = async (input) => {
+      seen.push(input);
+      return { runId: "r", status: "success" };
+    };
+    const { status, body } = await server.request("POST", "/approvals/abc", {
+      body: { approve: true, comment: "fine" },
+    });
+    expect(status).toBe(200);
+    expect(body).toEqual({ runId: "r", status: "success" });
+    expect(seen).toEqual([
+      { approvalId: "abc", approve: true, comment: "fine" },
+    ]);
+  });
+
+  it("needs a yes or no", async () => {
+    server = await startServer();
+    const { status } = await server.request("POST", "/approvals/abc", {
+      body: {},
+    });
+    expect(status).toBe(400);
+  });
+
+  it("passes core's refusal on", async () => {
+    server = await startServer();
+    server.mock.ctx.operations.approvals.decide = async () => {
+      throw Object.assign(new Error("This was already decided"), {
+        status: 409,
+      });
+    };
+    const { status, body } = await server.request("POST", "/approvals/abc", {
+      body: { approve: false },
+    });
+    expect(status).toBe(409);
+    expect(body.error).toBe("This was already decided");
+  });
+
+  it("needs the use permission", async () => {
+    server = await startServer({ permissions: [] });
+    const { status } = await server.request("POST", "/approvals/abc", {
+      body: { approve: true },
+    });
+    expect(status).toBe(403);
+  });
+});
+
+describe("cancel and undo", () => {
+  type Runs = {
+    cancel: (input: unknown) => Promise<unknown>;
+    undo: (input: unknown) => Promise<unknown>;
+  };
+  const withRuns = (runs: Runs) => {
+    (server.mock.ctx.operations as { runs?: Runs }).runs = runs;
+  };
+
+  it("cancels and undoes through core as the signed in person", async () => {
+    server = await startServer();
+    const seen: unknown[] = [];
+    withRuns({
+      cancel: async (input) => {
+        seen.push(["cancel", input]);
+        return { cancelled: true };
+      },
+      undo: async (input) => {
+        seen.push(["undo", input]);
+        return { runId: "u", status: "success" };
+      },
+    });
+    const cancel = await server.request("POST", "/runs/r1/cancel");
+    expect(cancel.status).toBe(200);
+    expect(cancel.body).toEqual({ cancelled: true });
+    const undo = await server.request("POST", "/runs/r1/undo", {
+      body: { confirmed: true, userId: "admin" },
+    });
+    expect(undo.status).toBe(200);
+    expect(seen).toEqual([
+      ["cancel", { runId: "r1" }],
+      ["undo", { runId: "r1", confirmed: true }],
+    ]);
+  });
+
+  it("passes core's refusal on", async () => {
+    server = await startServer();
+    withRuns({
+      cancel: async () => {
+        throw Object.assign(new Error("Run not found"), { status: 404 });
+      },
+      undo: async () => {
+        throw new Error("boom");
+      },
+    });
+    const cancel = await server.request("POST", "/runs/r1/cancel");
+    expect(cancel.status).toBe(404);
+    expect(cancel.body.error).toBe("Run not found");
+    const undo = await server.request("POST", "/runs/r1/undo");
+    expect(undo.status).toBe(500);
+    expect(undo.body.error).toBe("Request failed");
+  });
+
+  it("says so on a core without runs", async () => {
+    server = await startServer();
+    delete (server.mock.ctx.operations as { runs?: Runs }).runs;
+    const { status } = await server.request("POST", "/runs/r1/cancel");
+    expect(status).toBe(501);
+  });
+
+  it("needs the use permission", async () => {
+    server = await startServer({ permissions: [] });
+    const { status } = await server.request("POST", "/runs/r1/undo");
+    expect(status).toBe(403);
+  });
+});

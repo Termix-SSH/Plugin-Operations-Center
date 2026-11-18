@@ -48,6 +48,45 @@
     }
   ],
   "routes": {
+    "POST /plugin-api/operations-center/approvals/:id": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "params": {
+        "id": "=missing"
+      },
+      "body": {
+        "approve": false
+      },
+      "allowed": "any",
+      "expect": {
+        "key-ops-run": "refuse"
+      }
+    },
+    "POST /plugin-api/operations-center/runs/:id/cancel": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "params": {
+        "id": "=missing"
+      },
+      "allowed": "any",
+      "expect": {
+        "key-ops-run": "refuse"
+      }
+    },
+    "POST /plugin-api/operations-center/runs/:id/undo": {
+      "access": "user",
+      "permission": "operations-center.use",
+      "params": {
+        "id": "=missing"
+      },
+      "body": {
+        "confirmed": false
+      },
+      "allowed": "any",
+      "expect": {
+        "key-ops-run": "refuse"
+      }
+    },
     "GET /plugin-api/operations-center/attention": {
       "access": "user",
       "permission": "operations-center.use"
