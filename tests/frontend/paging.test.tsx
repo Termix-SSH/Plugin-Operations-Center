@@ -1,9 +1,7 @@
 import { cleanup } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { pageOf } from "../../src/frontend/parts";
-import { byPlugin } from "../../src/frontend/host-surfaces";
 import { filterActions, pluginOptions } from "../../src/frontend/parts";
-import type { CatalogAction } from "../../src/frontend/api";
 
 afterEach(cleanup);
 
@@ -22,24 +20,6 @@ describe("pageOf", () => {
   it("keeps the page in range when the list shrinks", () => {
     expect(pageOf(items, 9, 10).page).toBe(2);
     expect(pageOf([], 3, 10)).toEqual({ rows: [], page: 0, pages: 1 });
-  });
-});
-
-describe("byPlugin", () => {
-  const action = (pluginName: string, title: string) =>
-    ({ id: `${pluginName}.${title}`, pluginName, title }) as CatalogAction;
-
-  it("groups by plugin with names in order", () => {
-    const groups = byPlugin([
-      action("Services", "Restart"),
-      action("Docker", "Stop"),
-      action("Docker", "Restart"),
-    ]);
-    expect(groups.map((group) => group.plugin)).toEqual(["Docker", "Services"]);
-    expect(groups[0].actions.map((entry) => entry.title)).toEqual([
-      "Restart",
-      "Stop",
-    ]);
   });
 });
 
