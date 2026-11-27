@@ -352,5 +352,59 @@
     "none": "No hosts",
     "noTiles": "No status yet",
     "allGood": "All {{count}} checks OK"
+  },
+  "connect": {
+    "title": "Connect AI",
+    "intro": "Let an AI tool you already use, like Claude Code, Codex or Cursor, work on your hosts through Termix. It gets a key, and everything it does shows up here.",
+    "stepAccess": "1. What it may do",
+    "stepSetup": "2. Paste this into your AI tool",
+    "access": "Access",
+    "accessOptions": {
+      "operations:read": "Look only",
+      "operations:run": "Look and make changes"
+    },
+    "hosts": "Hosts",
+    "allHosts": "Every host I can reach",
+    "hostCount_one": "{{count}} host",
+    "hostCount_other": "{{count}} hosts",
+    "approval": "Approval",
+    "autoApprove": "Run changes without asking me",
+    "autoApproveOff": "Changes wait in Approvals until a person says yes.",
+    "autoApproveOn": "This key skips the wait on these hosts. Rules that refuse an action still refuse it.",
+    "create": "Make a key",
+    "adminOnly": "Ask an admin to make you a key limited to actions, then put it in the setup below.",
+    "needsNewer": "Limiting a key to hosts needs Termix 26.11.4 or newer",
+    "createFailed": "Could not make the key",
+    "keyName": "{{client}} (Connect AI)",
+    "keyPlaceholder": "YOUR_KEY",
+    "clients": {
+      "claude": "Claude Code",
+      "codex": "Codex",
+      "cursor": "Cursor",
+      "other": "Other"
+    },
+    "where": {
+      "claude": "Run this in a terminal on the computer where Claude Code runs.",
+      "codex": "Add this to ~/.codex/config.toml.",
+      "cursor": "Save this as .cursor/mcp.json in your project, or ~/.cursor/mcp.json for every project.",
+      "other": "Any tool that speaks MCP over HTTP works. Give it this address and header."
+    },
+    "address": "Termix address",
+    "addressHint": "Change it when the AI tool reaches Termix by another address than this browser does.",
+    "copy": "Copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "shownOnce": "The key is shown only this once. Copy the setup now.",
+    "keys": "Keys in use",
+    "noKeys": "No AI tool has a key yet",
+    "noApproval": "No approval",
+    "lastUsed": "Last used {{time}}",
+    "neverUsed": "Never used",
+    "revoke": "Revoke",
+    "revokeFailed": "Could not revoke the key",
+    "activity": "What AI tools did",
+    "noActivity": "Nothing yet",
+    "waiting_one": "{{count}} waiting for approval",
+    "waiting_other": "{{count}} waiting for approval"
   }
 }

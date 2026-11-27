@@ -25,6 +25,7 @@
     "A dot on the host list when a host needs attention",
     "Tables across every host, such as all containers or services, with bulk actions",
     "An MCP server so outside AI tools can use Termix actions with an API key",
+    "A Connect AI page that makes the key and the setup to paste into Claude Code, Codex or Cursor",
     "A Needs attention card on the dashboard",
     "Status and action tiles for the dashboard from every plugin",
     "Status tiles and one click action buttons for the homepage"
@@ -60,6 +61,12 @@
         "id": "operations",
         "titleKey": "tab.title",
         "icon": "Activity",
+        "openFrom": ["rail", "palette"]
+      },
+      {
+        "id": "connect-ai",
+        "titleKey": "connect.title",
+        "icon": "Bot",
         "openFrom": ["rail", "palette"]
       },
       {
