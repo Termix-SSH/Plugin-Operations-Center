@@ -79,15 +79,24 @@ Plugins run inside Termix, so how risky an action is comes from the plugin. Plug
 
 A baseline is a check that should always pass, such as a firewall port being open. It runs on the hosts you pick every few minutes and shows which hosts are as expected and which drifted. Add a fix action to fix drifted hosts with one click, or let the baseline fix them on its own. Approval rules still apply to the fix. You get an alert when a host drifts.
 
-## MCP
+## Connect AI
 
-Operations Center has an MCP server, so AI tools like Claude Code can use Termix actions.
+Operations Center has an MCP server, so AI tools you already use, like Claude Code, Codex or Cursor, can work on your hosts through Termix.
 
-1. Give the user the Use the MCP server permission.
-2. Make an API key in Termix, limited to Read actions or Run actions.
-3. Point the tool at `https://your-termix/plugin-api/operations-center/mcp` with the header `Authorization: Bearer <key>`.
+Open Connect AI from the rail.
 
-Only actions a plugin marked safe for MCP are offered. Changes follow the approval rules, so by default they wait for you in Approvals.
+1. Pick what the tool may do: look only, or look and make changes.
+2. Pick the hosts it may work on, or leave it at every host you can reach.
+3. Press Make a key. Only admins can make keys.
+4. Pick your tool and copy the setup into it. The key is shown once.
+
+Changes wait in Approvals until a person says yes. Tick Run changes without asking me to let this key skip the wait on the hosts you picked. A rule that refuses an action still refuses it. Host limits and skipping approval need Termix 26.11.4.
+
+The page lists the keys in use, with a Revoke button, and what AI tools did.
+
+The user needs the Use the MCP server permission. To set a tool up by hand, point it at `https://your-termix/plugin-api/operations-center/mcp` with the header `Authorization: Bearer <key>`, using an API key limited to actions.
+
+Only actions a plugin marked safe for MCP are offered. With the SSH Terminal and File Manager plugins that includes running a command, opening a terminal session you can watch from the Open terminals card, and reading and writing text files.
 
 ## Dashboard tiles
 

@@ -21,6 +21,7 @@ describe("sandboxed frame views", () => {
       hosts: [host],
       // Empty lists where the views expect them.
       respond: () => ({
+        apiKeys: [],
         approvals: [],
         rules: [],
         rollouts: [],

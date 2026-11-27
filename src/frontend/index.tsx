@@ -1,5 +1,5 @@
 import type { ComponentType } from "react";
-import { Activity, ServerCog, Table2, Zap } from "lucide-react";
+import { Activity, Bot, ServerCog, Table2, Zap } from "lucide-react";
 import type {
   CompanionProps,
   PluginHostRecord,
@@ -8,6 +8,7 @@ import type {
 } from "@termix-ssh/plugin-sdk/frontend";
 import { getCatalog, initApi } from "./api";
 import { AttentionCard } from "./AttentionCard";
+import { ConnectAiTab } from "./ConnectAiTab";
 import { HostPage } from "./HostPage";
 import {
   useAttentionDot,
@@ -30,6 +31,7 @@ import {
 
 const TAB = "operations";
 const HOST_TAB = "host";
+const CONNECT_TAB = "connect-ai";
 /** Layouts call this to show a tool inside the host page. */
 const OPEN_SECTION_ACTION = "host-page.open";
 const FROM_TAB_ACTION = "host-page.fromTab";
@@ -66,6 +68,23 @@ export function activate(app: TermixApp): void {
     group: "tools",
     promotable: true,
     order: 5,
+  });
+
+  app.registerTab(CONNECT_TAB, () => <ConnectAiTab tabs={app.tabs} />, {
+    icon: Bot,
+    titleKey: "connect.title",
+    singleton: true,
+    hostless: true,
+  });
+
+  app.registerRailItem({
+    id: CONNECT_TAB,
+    icon: Bot,
+    titleKey: "connect.title",
+    kind: "tab",
+    group: "tools",
+    simplePreset: true,
+    order: 6,
   });
 
   app.registerHostAction({
@@ -181,6 +200,15 @@ export function activate(app: TermixApp): void {
     keywords: ["actions", "run", "history", "approvals", "rollouts"],
     scope: "global",
     run: (shell) => shell.openSingletonTab(TAB),
+  });
+
+  app.registerPaletteEntry({
+    id: "connect-ai",
+    titleKey: "connect.title",
+    icon: Bot,
+    keywords: ["mcp", "claude", "codex", "cursor", "agent", "api key"],
+    scope: "global",
+    run: (shell) => shell.openSingletonTab(CONNECT_TAB),
   });
 
   app.registerPaletteEntry({
